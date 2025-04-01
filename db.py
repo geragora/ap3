@@ -17,8 +17,9 @@ from sqlalchemy.dialects.postgresql import UUID
 # Определение модели SQLAlchemy
 class Link(Base):
     __tablename__ = "links"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)  # Автогенерация UUID
+
+    id = Column(UUID(as_uuid=True), primary_key=True,
+                default=uuid.uuid4)  # Автогенерация UUID
     short_code = Column(String, unique=True, index=True)
     original_url = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -30,13 +31,16 @@ class Link(Base):
     user = relationship("User")
 # Pydantic-модели для запросов и ответов
 
+
 class URLRequest(BaseModel):
     original_url: str
-    custom_alias: str | None = None 
+    custom_alias: str | None = None
     expires_at: Optional[str] = None
+
 
 class URLResponse(BaseModel):
     short_url: str
+
 
 class URLStats(BaseModel):
     original_url: str

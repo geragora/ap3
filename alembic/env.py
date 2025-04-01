@@ -1,3 +1,4 @@
+from db import Base
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -20,7 +21,6 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 # from main import Base  # Импортируйте `Base` из основного файла FastAPI
-from db import Base
 target_metadata = Base.metadata
 
 

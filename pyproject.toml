@@ -18,8 +18,18 @@ fastapi-users = {extras = ["sqlalchemy"], version = "^14.0.1"}
 aioredis = "^2.0.1"
 apscheduler = "^3.11.0"
 celery = {extras = ["async"], version = "^5.4.0"}
+pytest = "^8.3.5"
+pytest-asyncio = "^0.26.0"
+httpx = "^0.28.1"
 
+
+[tool.poetry.group.dev.dependencies]
+pytest-mock = "^3.14.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]

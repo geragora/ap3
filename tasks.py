@@ -1,3 +1,5 @@
+from celery import Celery
+from sqlalchemy import text
 import asyncio
 from datetime import datetime, timedelta
 import logging
@@ -9,25 +11,30 @@ DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/urls"
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-from sqlalchemy import text
 
 async def delete_unused_links_async():
     async with async_session_maker() as session:
-        N_MINUTES = 10 
+        N_MINUTES = 10
         threshold_date = datetime.utcnow() - timedelta(minutes=N_MINUTES)
 
         logger.info(f"Ищем ссылки, не использовавшиеся с {threshold_date}...")
 
         try:
             result = await session.execute(
-                select(Link.short_code).where(Link.last_used_at < threshold_date).where(Link.last_used_at.isnot(None))
+                select(
+                    Link.short_code).where(
+                    Link.last_used_at < threshold_date).where(
+                    Link.last_used_at.isnot(None))
             )
             short_codes_to_delete = result.scalars().all()
 
-            logger.info(f"Найдено {len(short_codes_to_delete)} ссылок для удаления: {short_codes_to_delete}")
+            logger.info(
+                f"Найдено {len(short_codes_to_delete)} ссылок для удаления: {short_codes_to_delete}")
 
             if not short_codes_to_delete:
                 logger.info("Нет ссылок для удаления.")
@@ -45,13 +52,11 @@ async def delete_unused_links_async():
             logger.error(f"Ошибка при удалении ссылок: {e}")
 
 
-
-from celery import Celery
-
 celery_app = Celery('tasks', broker='pyamqp://guest@localhost//')
+
 
 @celery_app.task
 def delete_unused_links():
     logger.info("Запуск задачи очистки ссылок...")
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(delete_unused_links_async()) 
+    loop.run_until_complete(delete_unused_links_async())

@@ -1,9 +1,10 @@
 version: '3.10'
 
 services:
+  # Сервис для FastAPI приложения
   app:
     build: .
-    command: celery -A celer worker --loglevel=info
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - .:/app
     depends_on:
@@ -12,10 +13,13 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/urls
       - CELERY_BROKER=redis://redis:6379/0
-      
-  beat:
+    ports:
+      - "8000:8000"  # Открытие порта для FastAPI
+
+  # Сервис для Celery worker
+  celery_worker:
     build: .
-    command: celery -A celer beat --loglevel=info
+    command: bash -c "celery -A celer worker --loglevel=info"
     volumes:
       - .:/app
     depends_on:
@@ -25,6 +29,20 @@ services:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/urls
       - CELERY_BROKER=redis://redis:6379/0
 
+  # Сервис для Celery Beat
+  celery_beat:
+    build: .
+    command: bash -c "celery -A celer beat --loglevel=info"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/urls
+      - CELERY_BROKER=redis://redis:6379/0
+
+  # Сервис для базы данных PostgreSQL
   db:
     image: postgres:13
     environment:
@@ -34,5 +52,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  # Сервис для Redis (используется Celery как брокер)
   redis:
     image: redis:6
+    restart: always
+
+volumes:
+  postgres_data:
